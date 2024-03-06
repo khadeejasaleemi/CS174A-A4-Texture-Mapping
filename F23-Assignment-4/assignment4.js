@@ -7,6 +7,7 @@ const {
 const {Cube, Axis_Arrows, Textured_Phong} = defs
 
 export class Assignment4 extends Scene {
+    arrays;
     /**
      *  **Base_scene** is a Scene that can be added to any display canvas.
      *  Setup the shapes, materials, camera, and lighting here.
@@ -14,7 +15,7 @@ export class Assignment4 extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-
+        this.cuberotation = false;
         // TODO:  Create two cubes, including one with the default texture coordinates (from 0 to 1), and one with the modified
         //        texture coordinates as required for cube #2.  You can either do this by modifying the cube code or by modifying
         //        a cube instance's texture_coords after it is already created.
@@ -33,11 +34,17 @@ export class Assignment4 extends Scene {
             phong: new Material(new Textured_Phong(), {
                 color: hex_color("#ffffff"),
             }),
-            texture: new Material(new Textured_Phong(), {
-                color: hex_color("#ffffff"),
-                ambient: 0.5, diffusivity: 0.1, specularity: 0.1,
-                texture: new Texture("assets/stars.png")
+            starsTexture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0, /*diffusivity: 0.1, specularity: 0.1,*/ //do I need diffuse and specular?
+                texture: new Texture("assets/stars.png", "NEAREST")
             }),
+            earthTexture: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),  // <-- changed base color to black
+                ambient: 1.0,  // <-- changed ambient to 1
+                texture: new Texture("assets/earth.gif", "LINEAR_MIPMAP_LINEAR")
+            }),
+
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -45,6 +52,7 @@ export class Assignment4 extends Scene {
 
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
+        this.key_triggered_button("Cube rotation", ["c"], this.cuberotation);
     }
 
     display(context, program_state) {
@@ -64,9 +72,15 @@ export class Assignment4 extends Scene {
         let model_transform = Mat4.identity();
 
         // TODO:  Draw the required boxes. Also update their stored matrices.
-        // You can remove the folloeing line.
-        this.shapes.axis.draw(context, program_state, model_transform, this.materials.phong.override({color: hex_color("#ffff00")}));
-    }
+        // You can remove the following line.
+        this.box_1_transform = Mat4.translation(-2,0,0);
+        this.box_2_transform = Mat4.translation(2,0,0);
+        this.shapes.box_2.arrays.texture_coord.forEach(
+            (v, i, l) => l[i] = vec(v[0] * 2, v[1] * 2)
+        )
+        this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.starsTexture);
+        this.shapes.box_2.draw(context, program_state, this.box_2_transform, this.materials.earthTexture);
+        }
 }
 
 
