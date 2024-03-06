@@ -15,7 +15,8 @@ export class Assignment4 extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-        this.cuberotation = false;
+        this.cubeRotation = false;
+
         // TODO:  Create two cubes, including one with the default texture coordinates (from 0 to 1), and one with the modified
         //        texture coordinates as required for cube #2.  You can either do this by modifying the cube code or by modifying
         //        a cube instance's texture_coords after it is already created.
@@ -36,23 +37,32 @@ export class Assignment4 extends Scene {
             }),
             starsTexture: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
-                ambient: 1.0, /*diffusivity: 0.1, specularity: 0.1,*/ //do I need diffuse and specular?
+                ambient: 1.0, /*diffusivity: 0.1, specularity: 0.1,*/
                 texture: new Texture("assets/stars.png", "NEAREST")
             }),
             earthTexture: new Material(new Textured_Phong(), {
-                color: hex_color("#000000"),  // <-- changed base color to black
-                ambient: 1.0,  // <-- changed ambient to 1
+                color: hex_color("#000000"),
+                ambient: 1.0,
                 texture: new Texture("assets/earth.gif", "LINEAR_MIPMAP_LINEAR")
             }),
 
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+        this.box_1_transform = Mat4.translation(-2,0,0);
+        this.box_2_transform = Mat4.translation(2,0,0);
+        this.shapes.box_2.arrays.texture_coord.forEach(
+            (v, i, l) => l[i] = vec(v[0] * 2, v[1] * 2)
+        )
     }
 
     make_control_panel() {
         // TODO:  Implement requirement #5 using a key_triggered_button that responds to the 'c' key.
-        this.key_triggered_button("Cube rotation", ["c"], this.cuberotation);
+        this.key_triggered_button("Cube rotation", ["c"], function ()  {
+            this.cubeRotation ^= 1;
+        });
+
     }
 
     display(context, program_state) {
@@ -73,14 +83,26 @@ export class Assignment4 extends Scene {
 
         // TODO:  Draw the required boxes. Also update their stored matrices.
         // You can remove the following line.
-        this.box_1_transform = Mat4.translation(-2,0,0);
-        this.box_2_transform = Mat4.translation(2,0,0);
-        this.shapes.box_2.arrays.texture_coord.forEach(
-            (v, i, l) => l[i] = vec(v[0] * 2, v[1] * 2)
-        )
+
+        if (this.cubeRotation) {
+            this.box_1_transform = this.box_1_transform.times(Mat4.rotation((10*dt*2*Math.PI)/60, 1, 0, 0));
+            this.box_2_transform = this.box_2_transform.times(Mat4.rotation((15*dt*2*Math.PI)/60, 0, 1, 0));
+            /*can't use different variable for LHS (i.e. box_1_rotation) because what is drawn depends on only one variable.
+            * at the beginning, we draw it as is the box_transform in the constructor. once we press c, the cubes begin rotating
+            * at the specified angular velocity. once we press c again, the cubes are drawn according to the box_transform matrix.
+            * this matrix now has the value of the rotating box_transform (it's one matrix that constantly changes, but without
+            * moving because it's not rotating. we use dt instead of t in the angle because t would continue to build on itself and grow speed as
+            * we are using a single box_transform matrix. dt is the time at an instant, so it can rotate according to the program at an instant.
+            * when we use dt, the boxes rotate according to some miniscule value of the time that changes
+            * depending on the animation_time. we must put the original box_transform in the constructor because we don't want it to
+            * reset the box_transform matrix when we are using it for rotation. the display() runs multiple times, not just once.*/
+        }
+
         this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.starsTexture);
         this.shapes.box_2.draw(context, program_state, this.box_2_transform, this.materials.earthTexture);
+
         }
+
 }
 
 
