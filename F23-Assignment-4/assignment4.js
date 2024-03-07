@@ -35,12 +35,17 @@ export class Assignment4 extends Scene {
             phong: new Material(new Textured_Phong(), {
                 color: hex_color("#ffffff"),
             }),
-            starsTexture: new Material(new Textured_Phong(), {
+            starsText: new Material(new Textured_Phong(), {
                 color: hex_color("#000000"),
                 ambient: 1.0, /*diffusivity: 0.1, specularity: 0.1,*/
                 texture: new Texture("assets/stars.png", "NEAREST")
             }),
-            earthTexture: new Material(new Textured_Phong(), {
+            earthText: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1.0,
+                texture: new Texture("assets/earth.gif", "LINEAR_MIPMAP_LINEAR")
+            }),
+            scrollText: new Material(new Texture_Scroll_X(), {
                 color: hex_color("#000000"),
                 ambient: 1.0,
                 texture: new Texture("assets/earth.gif", "LINEAR_MIPMAP_LINEAR")
@@ -98,8 +103,8 @@ export class Assignment4 extends Scene {
             * reset the box_transform matrix when we are using it for rotation. the display() runs multiple times, not just once.*/
         }
 
-        this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.starsTexture);
-        this.shapes.box_2.draw(context, program_state, this.box_2_transform, this.materials.earthTexture);
+        this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.starsText);
+        this.shapes.box_2.draw(context, program_state, this.box_2_transform, this.materials.scrollText);
 
         }
 
@@ -116,12 +121,18 @@ class Texture_Scroll_X extends Textured_Phong {
             
             void main(){
                 // Sample the texture image in the correct place:
-                vec4 tex_color = texture2D( texture, f_tex_coord);
+                float scroll_factor = -2.00 * animation_time;
+                vec2 scroll_tex_coord = vec2(f_tex_coord.x + scroll_factor, f_tex_coord.y);
+                vec4 tex_color = texture2D( texture, scroll_tex_coord);
                 if( tex_color.w < .01 ) discard;
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
                                                                          // Compute the final color with contributions from lights:
                 gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
+                
+                /*Reset the texture coordinates passed into the GLSL's texture2D call periodically so they do
+                not continue to grow forever, which could cause the interpolated values to lose needed decimal precision 
+                */
         } `;
     }
 }
