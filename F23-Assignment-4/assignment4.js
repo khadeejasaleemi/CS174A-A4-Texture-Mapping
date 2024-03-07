@@ -95,17 +95,14 @@ export class Assignment4 extends Scene {
         // You can remove the following line.
 
         if (this.cubeRotation) {
+            //use the single variable box_transform rather than multiple matrices
+            //--> this way, the matrix's rotation angle will carry over even when cube rotation is not active
+            //use dt instead of t - smooth transition when starting/stopping cubes (uses time at a specific moment).
+            //moved original box_transform matrices into constructor to prevent them from resetting when display() is called
             this.box_1_transform = this.box_1_transform.times(Mat4.rotation((10*dt*2*Math.PI)/60, 1, 0, 0));
+            //box 1: 10 rpm. 2pi/60 represents the angle over the time (2pi is one full rotation, and 60s in a minute).
             this.box_2_transform = this.box_2_transform.times(Mat4.rotation((15*dt*2*Math.PI)/60, 0, 1, 0));
-            /*can't use different variable for LHS (i.e. box_1_rotation) because what is drawn depends on only one variable.
-            * at the beginning, we draw it as is the box_transform in the constructor. once we press c, the cubes begin rotating
-            * at the specified angular velocity. once we press c again, the cubes are drawn according to the box_transform matrix.
-            * this matrix now has the value of the rotating box_transform (it's one matrix that constantly changes, but without
-            * moving because it's not rotating. we use dt instead of t in the angle because t would continue to build on itself and grow speed as
-            * we are using a single box_transform matrix. dt is the time at an instant, so it can rotate according to the program at an instant.
-            * when we use dt, the boxes rotate according to some miniscule value of the time that changes
-            * depending on the animation_time. we must put the original box_transform in the constructor because we don't want it to
-            * reset the box_transform matrix when we are using it for rotation. the display() runs multiple times, not just once.*/
+            //box 2: 15rpm.
         }
 
         this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.rotateText);
@@ -129,15 +126,34 @@ class Texture_Scroll_X extends Textured_Phong {
                 float scroll_factor = -2.00 * mod(animation_time, 60.00);
                 vec2 scroll_tex_coord = vec2(f_tex_coord.x + scroll_factor, f_tex_coord.y);
                 vec4 tex_color = texture2D( texture, scroll_tex_coord);
+                
+                //TEXTURE COORD AXIS FROM 0 TO 1 (U,V)
+                float u = mod(scroll_tex_coord.x, 1.0);
+                float v = mod(scroll_tex_coord.y, 1.0);
+                
+                //bottom line of square
+                if (u > .15 && u < .85 && v > .15 && v < .25)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
+                //left
+                if (u > .15 && u < .25 && v > .15 && v < .85)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
+                //top  
+                if (u > .15 && u < .85 && v > .75 && v < .85)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
+                //right
+                if (u > .75 && u < .85 && v > .15 && v < .85)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
                 if( tex_color.w < .01 ) discard;
+            
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
                                                                          // Compute the final color with contributions from lights:
                 gl_FragColor.xyz += phong_model_lights( normalize( N ), vertex_worldspace );
-                
-                /*Reset the texture coordinates passed into the GLSL's texture2D call periodically so they do
-                not continue to grow forever, which could cause the interpolated values to lose needed decimal precision 
-                */
+                                
         } `;
     }
 }
@@ -164,8 +180,29 @@ class Texture_Rotate extends Textured_Phong {
                 rotate_tex_coord = vec4(0.50, 0.50, 0.00, 0.00) + (rotate_tex_coord * rotMatrix);
                 
                 vec4 tex_color = texture2D( texture, rotate_tex_coord.xy );
+                    
+                //TEXTURE COORD AXIS FROM 0 TO 1 (U,V)
+                float u = mod(rotate_tex_coord.x, 1.0);
+                float v = mod(rotate_tex_coord.y, 1.0);
                 
-                if( tex_color.w < .01 ) discard;                             
+                //bottom line of square
+                if (u > .15 && u < .85 && v > .15 && v < .25)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
+                //left
+                if (u > .15 && u < .25 && v > .15 && v < .85)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
+                //top  
+                if (u > .15 && u < .85 && v > .75 && v < .85)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                
+                //right
+                if (u > .75 && u < .85 && v > .15 && v < .85)
+                    tex_color = vec4(0.00, 0.00, 0.00, 1.00);
+                                        
+                if( tex_color.w < .01 ) discard;                                   
+                             
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
                                                                          // Compute the final color with contributions from lights:
