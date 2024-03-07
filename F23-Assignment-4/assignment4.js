@@ -50,6 +50,11 @@ export class Assignment4 extends Scene {
                 ambient: 1.0,
                 texture: new Texture("assets/earth.gif", "LINEAR_MIPMAP_LINEAR")
             }),
+            rotateText: new Material(new Texture_Rotate(), {
+                color: hex_color("#000000"),
+                ambient: 1.0, /*diffusivity: 0.1, specularity: 0.1,*/
+                texture: new Texture("assets/stars.png", "NEAREST")
+            }),
 
         }
 
@@ -103,7 +108,7 @@ export class Assignment4 extends Scene {
             * reset the box_transform matrix when we are using it for rotation. the display() runs multiple times, not just once.*/
         }
 
-        this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.starsText);
+        this.shapes.box_1.draw(context, program_state, this.box_1_transform, this.materials.rotateText);
         this.shapes.box_2.draw(context, program_state, this.box_2_transform, this.materials.scrollText);
 
         }
@@ -121,7 +126,7 @@ class Texture_Scroll_X extends Textured_Phong {
             
             void main(){
                 // Sample the texture image in the correct place:
-                float scroll_factor = -2.00 * animation_time;
+                float scroll_factor = -2.00 * mod(animation_time, 60.00);
                 vec2 scroll_tex_coord = vec2(f_tex_coord.x + scroll_factor, f_tex_coord.y);
                 vec4 tex_color = texture2D( texture, scroll_tex_coord);
                 if( tex_color.w < .01 ) discard;
@@ -146,9 +151,21 @@ class Texture_Rotate extends Textured_Phong {
             uniform sampler2D texture;
             uniform float animation_time;
             void main(){
-                // Sample the texture image in the correct place:
-                vec4 tex_color = texture2D( texture, f_tex_coord );
-                if( tex_color.w < .01 ) discard;
+                // Sample the texture image in the correct place
+               
+                float rot_factor = ( 20.00*mod(animation_time, 60.00)*2.00*3.141592653 )/60.00;
+                mat4 rotMatrix = mat4(
+                vec4(cos(rot_factor), sin(rot_factor), 0.00, 0.00), 
+                vec4(-sin(rot_factor), cos(rot_factor), 0.00, 0.00), 
+                vec4( 0.00, 0.00, 1.00, 0.00), 
+                vec4(0.00, 0.00, 0.00, 1.00));
+                                                  
+                vec4 rotate_tex_coord = vec4(-0.50, -0.50, 0.00, 0.00) + vec4(f_tex_coord, 0.00, 0.00);
+                rotate_tex_coord = vec4(0.50, 0.50, 0.00, 0.00) + (rotate_tex_coord * rotMatrix);
+                
+                vec4 tex_color = texture2D( texture, rotate_tex_coord.xy );
+                
+                if( tex_color.w < .01 ) discard;                             
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
                                                                          // Compute the final color with contributions from lights:
